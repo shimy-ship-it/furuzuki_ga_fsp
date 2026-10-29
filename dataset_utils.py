@@ -1,11 +1,12 @@
 import os
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def load_dataset(path, target_column):
+def load_dataset(path: str, target_column: str) -> Tuple[pd.DataFrame, pd.Series]:
     data = pd.read_csv(path)
     data = data.loc[:, ~data.columns.str.match(r"^Unnamed")]
     if target_column not in data.columns:
@@ -25,8 +26,10 @@ def load_dataset(path, target_column):
     return features, target
 
 
-def split_dataset(features, target, dataset_dir="dataset", test_size=0.20,
-                  random_seed=42):
+def split_dataset(features: pd.DataFrame, target: pd.Series,
+                  dataset_dir: str = "dataset", test_size: float = 0.20,
+                  random_seed: int = 42) -> Tuple[
+                      pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     os.makedirs(dataset_dir, exist_ok=True)
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, test_size=test_size,

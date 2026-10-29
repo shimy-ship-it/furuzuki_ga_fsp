@@ -1,6 +1,8 @@
 import copy
+from typing import Any, Dict, Sequence
 
 import numpy as np
+import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -9,7 +11,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class _PyTorchMLP(nn.Module):
-    def __init__(self, input_size, hidden_layers, activation):
+    def __init__(self, input_size: int, hidden_layers: Sequence[int],
+                 activation: str) -> None:
         super(_PyTorchMLP, self).__init__()
         layers = []
         previous_size = input_size
@@ -27,14 +30,16 @@ class _PyTorchMLP(nn.Module):
         layers.append(nn.Linear(previous_size, 1))
         self.network = nn.Sequential(*layers)
 
-    def forward(self, X):
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
         return self.network(X).squeeze(-1)
 
 
 class NeuralNetworkPredictor:
-    def __init__(self, hidden_layers=(64, 32), activation="relu", max_iter=500,
-                 random_seed=42, validation_fraction=0.15, n_iter_no_change=20,
-                 batch_size=64, learning_rate=0.001):
+    def __init__(self, hidden_layers: Sequence[int] = (64, 32),
+                 activation: str = "relu", max_iter: int = 500,
+                 random_seed: int = 42, validation_fraction: float = 0.15,
+                 n_iter_no_change: int = 20, batch_size: int = 64,
+                 learning_rate: float = 0.001) -> None:
         self.hidden_layers = tuple(hidden_layers)
         self.activation = activation
         self.max_iter = max_iter
@@ -47,7 +52,8 @@ class NeuralNetworkPredictor:
         self.model = None
         self.iterations_run = 0
 
-    def fit(self, X, y):
+    def fit(self, X: pd.DataFrame,
+            y: pd.Series) -> "NeuralNetworkPredictor":
         if self.activation not in ("relu", "tanh", "logistic"):
             raise ValueError("Unsupported activation: {}".format(self.activation))
 
@@ -121,7 +127,7 @@ class NeuralNetworkPredictor:
         self.model.eval()
         return self
 
-    def predict(self, X):
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
         if self.model is None or self.scaler is None:
             raise RuntimeError("Model has not been fitted")
         X_scaled = self.scaler.transform(X)
@@ -130,7 +136,7 @@ class NeuralNetworkPredictor:
             predictions = self.model(X_tensor).numpy()
         return predictions
 
-    def details(self):
+    def details(self) -> Dict[str, Any]:
         if self.model is None:
             return {}
         return {

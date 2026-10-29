@@ -1,6 +1,8 @@
 import random
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -8,8 +10,9 @@ from sklearn.svm import SVR
 
 
 class GeneticSVMPredictor:
-    def __init__(self, population_size=10, generations=5, cv_folds=3,
-                 random_seed=42, tournament_size=3):
+    def __init__(self, population_size: int = 10, generations: int = 5,
+                 cv_folds: int = 3, random_seed: int = 42,
+                 tournament_size: int = 3) -> None:
         self.population_size = population_size
         self.generations = generations
         self.cv_folds = cv_folds
@@ -19,7 +22,7 @@ class GeneticSVMPredictor:
         self.selected_features = []
         self._details = {}
 
-    def _parameters(self, chromosome, n_features):
+    def _parameters(self, chromosome: np.ndarray, n_features: int) -> Dict[str, Any]:
         mask = chromosome[:n_features] > 0.5
         if mask.sum() == 0:
             mask[np.argmax(chromosome[:n_features])] = True
@@ -30,7 +33,7 @@ class GeneticSVMPredictor:
             "gamma": "scale" if chromosome[n_features + 2] < 0.5 else "auto"
         }
 
-    def _make_chromosome(self, n_features):
+    def _make_chromosome(self, n_features: int) -> np.ndarray:
         mask = np.random.random(n_features)
         mask[mask < 0.7] = 0.0
         mask[mask >= 0.7] = 1.0
@@ -45,7 +48,8 @@ class GeneticSVMPredictor:
             ])
         ])
 
-    def _fitness(self, chromosome, X, y, n_features, cv):
+    def _fitness(self, chromosome: np.ndarray, X: pd.DataFrame,
+                 y: pd.Series, n_features: int, cv: KFold) -> float:
         params = self._parameters(chromosome, n_features)
         pipeline = Pipeline([
             ("scale", StandardScaler()),
@@ -57,18 +61,21 @@ class GeneticSVMPredictor:
         )
         return float(np.mean(scores))
 
-    def _tournament(self, population, fitness):
+    def _tournament(self, population: List[np.ndarray],
+                    fitness: List[float]) -> np.ndarray:
         tournament_size = min(self.tournament_size, len(population))
         candidates = np.random.choice(len(population), size=tournament_size, replace=False)
         best = candidates[np.argmax([fitness[i] for i in candidates])]
         return population[best].copy()
 
-    def _crossover(self, parent_a, parent_b):
+    def _crossover(self, parent_a: np.ndarray,
+                   parent_b: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         point = np.random.randint(1, len(parent_a))
         return (np.concatenate([parent_a[:point], parent_b[point:]]),
                 np.concatenate([parent_b[:point], parent_a[point:]]))
 
-    def _mutate(self, chromosome, n_features):
+    def _mutate(self, chromosome: np.ndarray,
+                n_features: int) -> np.ndarray:
         chromosome = chromosome.copy()
         for index in range(n_features):
             if np.random.random() < 0.08:
@@ -83,7 +90,8 @@ class GeneticSVMPredictor:
                     chromosome[index] = np.clip(np.random.normal(chromosome[index], 0.15), 0.0, 1.0)
         return chromosome
 
-    def fit(self, X, y):
+    def fit(self, X: pd.DataFrame,
+            y: pd.Series) -> "GeneticSVMPredictor":
         np.random.seed(self.random_seed)
         random.seed(self.random_seed)
         n_features = X.shape[1]
@@ -133,10 +141,10 @@ class GeneticSVMPredictor:
         }
         return self
 
-    def predict(self, X):
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
         if self.model is None:
             raise RuntimeError("Model has not been fitted")
         return self.model.predict(X[self.selected_features])
 
-    def details(self):
+    def details(self) -> Dict[str, Any]:
         return self._details.copy()

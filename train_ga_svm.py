@@ -6,7 +6,6 @@ import json
 import os
 import random
 import sys
-
 import joblib
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -15,7 +14,7 @@ from dataset_utils import load_dataset, split_dataset
 from models.ga_svm import GeneticSVMPredictor
 
 
-def build_parser():
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Train the genetic algorithm + SVM model")
     parser.add_argument("--data", default=os.path.join("dataset", "industrial_dataset.csv"))
     parser.add_argument("--target", default="Target")
@@ -29,7 +28,7 @@ def build_parser():
     return parser
 
 
-def main():
+def main() -> int:
     args = build_parser().parse_args()
     if not 0.05 <= args.test_size < 0.95:
         raise ValueError("--test-size must be between 0.05 and 0.95")

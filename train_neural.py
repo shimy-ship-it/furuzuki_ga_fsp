@@ -6,6 +6,7 @@ import json
 import os
 import random
 import sys
+from typing import List
 
 import joblib
 import numpy as np
@@ -15,7 +16,7 @@ from dataset_utils import load_dataset, split_dataset
 from models.neural_network import NeuralNetworkPredictor
 
 
-def parse_hidden_layers(value):
+def parse_hidden_layers(value: str) -> List[int]:
     try:
         result = [int(part.strip()) for part in value.split(",") if part.strip()]
         if not result or any(size <= 0 for size in result):
@@ -26,7 +27,7 @@ def parse_hidden_layers(value):
             "Hidden layers must be positive integers separated by commas, e.g. 64,32")
 
 
-def build_parser():
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Train the PyTorch neural-network model")
     parser.add_argument("--data", default=os.path.join("dataset", "industrial_dataset.csv"))
     parser.add_argument("--target", default="Target")
@@ -44,7 +45,7 @@ def build_parser():
     return parser
 
 
-def main():
+def main() -> int:
     args = build_parser().parse_args()
     if not 0.05 <= args.test_size < 0.95:
         raise ValueError("--test-size must be between 0.05 and 0.95")
