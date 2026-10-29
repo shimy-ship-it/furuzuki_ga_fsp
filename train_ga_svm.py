@@ -22,8 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="output-ga-svm")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--test-size", type=float, default=0.20)
-    parser.add_argument("--population", type=int, default=20)
-    parser.add_argument("--generations", type=int, default=30)
+    parser.add_argument("--population", type=int, default=30)
+    parser.add_argument("--generations", type=int, default=50)
     parser.add_argument("--cv-folds", type=int, default=3)
     return parser
 

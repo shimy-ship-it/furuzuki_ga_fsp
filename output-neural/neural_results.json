@@ -1,0 +1,25 @@
+{
+  "model_type": "neural",
+  "framework": "PyTorch",
+  "dataset": "D:\\pypractice\\furuzuki_ga_fsp\\dataset\\industrial_dataset.csv",
+  "random_seed": 42,
+  "train_rows": 2310,
+  "test_rows": 578,
+  "metrics": {
+    "MAE": 0.3105961252803621,
+    "RMSE": 0.42481984724638067,
+    "R2": 0.8111273658061183
+  },
+  "model_details": {
+    "framework": "PyTorch",
+    "hidden_layer_sizes": [
+      64,
+      32
+    ],
+    "activation": "relu",
+    "max_iter": 500,
+    "iterations_run": 500,
+    "batch_size": 64,
+    "learning_rate": 0.001
+  }
+}
