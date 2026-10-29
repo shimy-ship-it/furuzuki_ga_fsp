@@ -7,9 +7,11 @@ All source and split CSV files are stored in `dataset/`. Data is randomly split 
 ```text
 train_ga_svm.py        Independent GA-SVM training entry point
 train_neural.py        Independent PyTorch neural-network entry point
+train_linear.py        Independent linear-regression entry point
 dataset_utils.py       Dataset loading and 80/20 splitting
 models/ga_svm.py      GA-SVM implementation
 models/neural_network.py  PyTorch implementation
+models/linear_regression.py Linear regression implementation
 ```
 
 The models use separate implementations and separate training scripts. The neural network is implemented with a simple PyTorch feed-forward network, Adam, mini-batches, and CPU tensor operations without a validation split or early stopping.
@@ -25,6 +27,7 @@ python -m pip install -r requirements.txt
 ```powershell
 python train_ga_svm.py
 python train_neural.py
+python train_linear.py
 ```
 
 ### GA-SVM options
@@ -35,6 +38,14 @@ python train_neural.py
 --cv-folds         Fitness cross-validation folds (default: 3)
 --dataset-dir      Split CSV directory (default: dataset)
 --output-dir       Output directory (default: output-ga-svm)
+```
+
+### Linear regression options
+
+```text
+--no-fit-intercept  Train without an intercept term
+--dataset-dir       Split CSV directory (default: dataset)
+--output-dir        Output directory (default: output-linear)
 ```
 
 ### PyTorch neural-network options
