@@ -12,7 +12,7 @@ models/ga_svm.py      GA-SVM implementation
 models/neural_network.py  PyTorch implementation
 ```
 
-The models use separate implementations and separate training scripts. The neural network is implemented with PyTorch, Adam, early stopping, and CPU tensor operations.
+The models use separate implementations and separate training scripts. The neural network is implemented with a simple PyTorch feed-forward network, Adam, mini-batches, and CPU tensor operations without a validation split or early stopping.
 
 ## Install
 

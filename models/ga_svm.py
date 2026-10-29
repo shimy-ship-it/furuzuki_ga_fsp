@@ -56,7 +56,7 @@ class GeneticSVMPredictor:
             y,
             cv=cv,
             scoring="neg_mean_squared_error",
-            n_jobs=1
+            n_jobs=-1
         )
         return float(np.mean(scores))
 

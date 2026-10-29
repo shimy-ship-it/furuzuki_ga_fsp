@@ -38,8 +38,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hidden-layers", type=parse_hidden_layers, default=[64, 32])
     parser.add_argument("--activation", choices=["relu", "tanh", "logistic"], default="relu")
     parser.add_argument("--max-iter", type=int, default=500)
-    parser.add_argument("--validation-fraction", type=float, default=0.15)
-    parser.add_argument("--n-iter-no-change", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     return parser
@@ -64,8 +62,6 @@ def main() -> int:
         activation=args.activation,
         max_iter=args.max_iter,
         random_seed=args.seed,
-        validation_fraction=args.validation_fraction,
-        n_iter_no_change=args.n_iter_no_change,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate
     )
