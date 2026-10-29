@@ -25,8 +25,14 @@ class GeneticSVMPredictor:
         self.epsilon = epsilon
         self.gamma = gamma
         self.model = None
-        self.selected_features = []
-        self._details = {}
+        self.selected_features: List[str] = []
+        self._details: Dict[str, Any] = {}
+        self.fitness_history: Dict[str, List[float]] = {
+            "generation": [],
+            "max": [],
+            "min": [],
+            "mean": []
+        }
 
     def _make_chromosome(self, n_features: int) -> np.ndarray:
         chromosome = np.random.randint(0, 2, size=n_features, dtype=np.int8)
@@ -85,6 +91,36 @@ class GeneticSVMPredictor:
             mutated[np.random.randint(0, len(mutated))] = 1
         return mutated.astype(np.int8)
 
+    def _record_fitness(self, generation: int, fitness: List[float]) -> None:
+        self.fitness_history["generation"].append(float(generation))
+        self.fitness_history["max"].append(float(np.max(fitness)))
+        self.fitness_history["min"].append(float(np.min(fitness)))
+        self.fitness_history["mean"].append(float(np.mean(fitness)))
+
+    def plot_fitness_history(self, output_path: str) -> None:
+        if not self.fitness_history["generation"]:
+            raise RuntimeError("No fitness history has been recorded")
+
+        import matplotlib.pyplot as plt
+
+        generations = self.fitness_history["generation"]
+        min_mse = [-value for value in self.fitness_history["max"]]
+        max_mse = [-value for value in self.fitness_history["min"]]
+        mean_mse = [-value for value in self.fitness_history["mean"]]
+
+        plt.figure(figsize=(8, 5))
+        plt.plot(generations, max_mse, marker="o", label="Maximum MSE")
+        plt.plot(generations, min_mse, marker="o", label="Minimum MSE")
+        plt.plot(generations, mean_mse, marker="o", label="Average MSE")
+        plt.xlabel("Generation")
+        plt.ylabel("MSE")
+        plt.title("GA Positive MSE by Generation")
+        plt.legend()
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=150, bbox_inches="tight")
+        plt.close()
+
     def fit(self, X: pd.DataFrame, y: pd.Series) -> "GeneticSVMPredictor":
         np.random.seed(self.random_seed)
         random.seed(self.random_seed)
@@ -98,6 +134,13 @@ class GeneticSVMPredictor:
         cv = KFold(n_splits=min(self.cv_folds, len(y)), shuffle=True, random_state=self.random_seed)
         population = [self._make_chromosome(n_features) for _ in range(self.population_size)]
         fitness = [self._fitness(chromosome, X, y, cv) for chromosome in population]
+        self.fitness_history = {
+            "generation": [],
+            "max": [],
+            "min": [],
+            "mean": []
+        }
+        self._record_fitness(0, fitness)
 
         for generation in range(self.generations):
             next_population: List[np.ndarray] = []
@@ -114,6 +157,7 @@ class GeneticSVMPredictor:
 
             population = next_population[:self.population_size]
             fitness = [self._fitness(chromosome, X, y, cv) for chromosome in population]
+            self._record_fitness(generation + 1, fitness)
             best_index = int(np.argmax(fitness))
             best_mask = self._selected_mask(population[best_index])
             best_score = float(np.sqrt(-fitness[best_index]))
@@ -146,7 +190,8 @@ class GeneticSVMPredictor:
             "C": self.C,
             "epsilon": self.epsilon,
             "gamma": self.gamma,
-            "cv_rmse": float(np.sqrt(-fitness[best_index]))
+            "cv_rmse": float(np.sqrt(-fitness[best_index])),
+            "fitness_history": self.fitness_history.copy()
         }
         return self
 

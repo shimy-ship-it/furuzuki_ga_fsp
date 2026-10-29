@@ -22,8 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="output-ga-svm")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--test-size", type=float, default=0.20)
-    parser.add_argument("--population", type=int, default=10)
-    parser.add_argument("--generations", type=int, default=5)
+    parser.add_argument("--population", type=int, default=20)
+    parser.add_argument("--generations", type=int, default=30)
     parser.add_argument("--cv-folds", type=int, default=3)
     return parser
 
@@ -58,6 +58,8 @@ def main() -> int:
     }
 
     os.makedirs(args.output_dir, exist_ok=True)
+    fitness_plot_path = os.path.join(args.output_dir, "ga_fitness_history.png")
+    model.plot_fitness_history(fitness_plot_path)
     joblib.dump(model, os.path.join(args.output_dir, "ga_svm_model.joblib"))
     results = {
         "model_type": "ga-svm",
@@ -74,6 +76,7 @@ def main() -> int:
     print("Test metrics: MAE={:.6f}, RMSE={:.6f}, R2={:.6f}".format(
         metrics["MAE"], metrics["RMSE"], metrics["R2"]))
     print("Saved GA-SVM results to {}".format(os.path.abspath(args.output_dir)))
+    print("Saved fitness history plot to {}".format(os.path.abspath(fitness_plot_path)))
     return 0
 
 
