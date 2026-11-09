@@ -25,6 +25,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--population", type=int, default=30)
     parser.add_argument("--generations", type=int, default=50)
     parser.add_argument("--cv-folds", type=int, default=3)
+    parser.add_argument(
+        "--feature-penalty-weight",
+        type=float,
+        default=0.1,
+        help="Weight for the selected-feature ratio penalty in the GA objective"
+    )
     return parser
 
 
@@ -46,7 +52,8 @@ def main() -> int:
         population_size=args.population,
         generations=args.generations,
         cv_folds=args.cv_folds,
-        random_seed=args.seed
+        random_seed=args.seed,
+        feature_penalty_weight=args.feature_penalty_weight
     )
     model.fit(X_train, y_train)
 

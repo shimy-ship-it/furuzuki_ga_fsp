@@ -15,7 +15,11 @@ class GeneticSVMPredictor:
     def __init__(self, population_size: int = 20, generations: int = 30,
                  cv_folds: int = 3, random_seed: int = 42,
                  tournament_size: int = 3, C: float = 1.0,
-                 epsilon: float = 0.1, gamma: str = "scale") -> None:
+                 epsilon: float = 0.1, gamma: str = "scale",
+                 feature_penalty_weight: float = 0.1) -> None:
+        if not np.isfinite(feature_penalty_weight) or feature_penalty_weight < 0:
+            raise ValueError("feature_penalty_weight must be a finite non-negative number")
+
         self.population_size = population_size
         self.generations = generations
         self.cv_folds = cv_folds
@@ -24,6 +28,7 @@ class GeneticSVMPredictor:
         self.C = C
         self.epsilon = epsilon
         self.gamma = gamma
+        self.feature_penalty_weight = feature_penalty_weight
         self.model = None
         self.selected_features: List[str] = []
         self._details: Dict[str, Any] = {}
@@ -64,7 +69,9 @@ class GeneticSVMPredictor:
             scoring="neg_mean_squared_error",
             n_jobs=-1
         )
-        return float(np.mean(scores))
+        mean_mse = -float(np.mean(scores))
+        feature_ratio = float(mask.sum()) / X.shape[1]
+        return -mean_mse - self.feature_penalty_weight * feature_ratio
 
     def _tournament(self, population: List[np.ndarray],
                     fitness: List[float]) -> np.ndarray:
@@ -104,17 +111,17 @@ class GeneticSVMPredictor:
         import matplotlib.pyplot as plt
 
         generations = self.fitness_history["generation"]
-        min_mse = [-value for value in self.fitness_history["max"]]
-        max_mse = [-value for value in self.fitness_history["min"]]
-        mean_mse = [-value for value in self.fitness_history["mean"]]
+        best_loss = [-value for value in self.fitness_history["max"]]
+        worst_loss = [-value for value in self.fitness_history["min"]]
+        mean_loss = [-value for value in self.fitness_history["mean"]]
 
         plt.figure(figsize=(8, 5))
-        plt.plot(generations, max_mse, marker="o", label="Maximum MSE")
-        plt.plot(generations, min_mse, marker="o", label="Minimum MSE")
-        plt.plot(generations, mean_mse, marker="o", label="Average MSE")
+        plt.plot(generations, best_loss, marker="o", label="Best weighted loss")
+        plt.plot(generations, worst_loss, marker="o", label="Worst weighted loss")
+        plt.plot(generations, mean_loss, marker="o", label="Average weighted loss")
         plt.xlabel("Generation")
-        plt.ylabel("MSE")
-        plt.title("GA Positive MSE by Generation")
+        plt.ylabel("MSE + weighted feature ratio")
+        plt.title("GA Weighted Objective by Generation")
         plt.legend()
         plt.grid(True, linestyle="--", alpha=0.5)
         plt.tight_layout()
@@ -160,7 +167,11 @@ class GeneticSVMPredictor:
             self._record_fitness(generation + 1, fitness)
             best_index = int(np.argmax(fitness))
             best_mask = self._selected_mask(population[best_index])
-            best_score = float(np.sqrt(-fitness[best_index]))
+            best_feature_ratio = float(best_mask.sum()) / n_features
+            best_mse = -fitness[best_index] - (
+                self.feature_penalty_weight * best_feature_ratio
+            )
+            best_score = float(np.sqrt(best_mse))
             print("GA generation {}/{} - CV RMSE: {:.6f} - features: {}".format(
                 generation + 1,
                 self.generations,
@@ -181,16 +192,26 @@ class GeneticSVMPredictor:
             ("svr", SVR(kernel="rbf", C=self.C, epsilon=self.epsilon, gamma=self.gamma))
         ])
         self.model.fit(X[self.selected_features], y)
+        feature_ratio = float(best_mask.sum()) / n_features
+        cv_mse = -fitness[best_index] - (
+            self.feature_penalty_weight * feature_ratio
+        )
         self._details = {
             "encoding": "binary",
-            "objective": "feature_selection",
+            "objective": "weighted_single_objective",
+            "fitness_formula": "-MSE - feature_penalty_weight * selected_feature_ratio",
+            "feature_penalty_weight": self.feature_penalty_weight,
+            "feature_ratio": feature_ratio,
+            "feature_penalty": self.feature_penalty_weight * feature_ratio,
+            "best_fitness": float(fitness[best_index]),
             "selected_features": self.selected_features,
             "feature_count": len(self.selected_features),
             "selected_mask": best_mask.astype(int).tolist(),
             "C": self.C,
             "epsilon": self.epsilon,
             "gamma": self.gamma,
-            "cv_rmse": float(np.sqrt(-fitness[best_index])),
+            "cv_mse": float(cv_mse),
+            "cv_rmse": float(np.sqrt(cv_mse)),
             "fitness_history": self.fitness_history.copy()
         }
         return self

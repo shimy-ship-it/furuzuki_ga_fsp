@@ -1,4 +1,4 @@
-﻿# Industrial CSV Prediction
+# Industrial CSV Prediction
 
 All source and split CSV files are stored in `dataset/`. Data is randomly split into an 80% training set and a 20% test set.
 
@@ -36,9 +36,14 @@ python train_linear.py
 --population       GA population size (default: 10)
 --generations      GA generations (default: 5)
 --cv-folds         Fitness cross-validation folds (default: 3)
+--feature-penalty-weight
+                   Feature ratio penalty weight (default: 0.1)
 --dataset-dir      Split CSV directory (default: dataset)
 --output-dir       Output directory (default: output-ga-svm)
 ```
+
+The GA maximizes `-MSE - feature_penalty_weight * (selected features / total features)`,
+balancing cross-validation error and the number of selected features.
 
 ### Linear regression options
 
