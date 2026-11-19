@@ -14,7 +14,7 @@ models/neural_network.py  PyTorch implementation
 models/linear_regression.py Linear regression implementation
 ```
 
-The models use separate implementations and separate training scripts. The neural network is implemented with a simple PyTorch feed-forward network, Adam, mini-batches, and CPU tensor operations without a validation split or early stopping.
+The neural-network module contains only the PyTorch feed-forward architecture. Training and prediction are implemented in `train_neural.py`, using Adam, mini-batches, and CPU tensors without a validation split or early stopping.
 
 ## Install
 
